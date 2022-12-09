@@ -19,7 +19,7 @@ import (
 	"github.com/keptn/keptn/resource-service/config"
 	"github.com/keptn/keptn/resource-service/controller"
 	"github.com/keptn/keptn/resource-service/handler"
-	log "github.com/sirupsen/logrus"
+	logger "github.com/sirupsen/logrus"
 )
 
 // @title        Resource Service API
@@ -44,18 +44,18 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	if err := envconfig.Process("", &config.Global); err != nil {
-		log.Errorf("Failed to process env var: %v", err)
+		logger.Errorf("Failed to process env var: %v", err)
 		os.Exit(1)
 	}
 
-	log.SetLevel(log.InfoLevel)
+	logger.SetLevel(logger.InfoLevel)
 
 	if os.Getenv(envVarLogLevel) != "" {
-		logLevel, err := log.ParseLevel(os.Getenv(envVarLogLevel))
+		logLevel, err := logger.ParseLevel(os.Getenv(envVarLogLevel))
 		if err != nil {
-			log.Errorf("could not parse log level provided by 'LOG_LEVEL' env var: %v", err)
+			logger.Errorf("could not parse logger level provided by 'LOG_LEVEL' env var: %v", err)
 		} else {
-			log.SetLevel(logLevel)
+			logger.SetLevel(logLevel)
 		}
 	}
 
@@ -79,7 +79,7 @@ func main() {
 
 	kubeAPI, err := createKubeAPI()
 	if err != nil {
-		log.Fatalf("could not create kubernetes client: %s", err.Error())
+		logger.Fatalf("could not create kubernetes client: %s", err.Error())
 	}
 
 	credentialReader := common.NewK8sCredentialReader(kubeAPI)
@@ -132,7 +132,7 @@ func main() {
 	// it won't block the graceful shutdown handling below
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Errorf("could not start API server: %v", err)
+			logger.Errorf("could not start API server: %v", err)
 		}
 	}()
 
@@ -165,14 +165,14 @@ func gracefulShutdown(ctx context.Context, wg *sync.WaitGroup, srv *http.Server)
 
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutting down server...")
+	logger.Println("Shutting down server...")
 
 	wg.Wait()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown: ", err)
+		logger.Fatal("Server forced to shutdown: ", err)
 	}
 
-	log.Println("Server exiting")
+	logger.Println("Server exiting")
 }
 
 func createKubeAPI() (*kubernetes.Clientset, error) {
